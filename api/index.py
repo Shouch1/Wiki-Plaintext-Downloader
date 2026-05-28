@@ -1,3 +1,50 @@
+import time
+import json
+import re
+from urllib.parse import urlparse
+from flask import Flask, request, Response, stream_with_context, render_template_string
+import requests
+
+app = Flask(__name__)
+
+def clean_wikitext(text):
+    """
+    A robust, fast regex-based cleaner to convert Wikitext to Plaintext.
+    Prioritizes keeping all human-readable content while stripping technical markup.
+    """
+    if not text: return ""
+    
+    # 1. Remove comments
+    text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
+    
+    # 2. Remove File and Category links (usually at the end or side)
+    text = re.sub(r'\[\[(File|Category|Image|Media):.*?\]\]', '', text, flags=re.IGNORECASE | re.DOTALL)
+    
+    # 3. Handle internal links: [[Target|Display]] -> Display, [[Target]] -> Target
+    text = re.sub(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]', r'\1', text)
+    
+    # 4. Remove templates {{...}}. This is tricky because they can be nested.
+    # We do a few passes to catch nested templates.
+    for _ in range(5):
+        text = re.sub(r'\{\{[^{}]*\}\}', '', text, flags=re.DOTALL)
+    
+    # 5. Remove tables {|...|}
+    text = re.sub(r'\{\|.*?\|\}', '', text, flags=re.DOTALL)
+    
+    # 6. Remove HTML tags like <ref>, <gallery>, etc. and their content
+    text = re.sub(r'<(ref|gallery|small|big|blockquote|cite|div|span|table|tr|td|th).*?>.*?</\1>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    # Remove self-closing tags or tags without content
+    text = re.sub(r'<[^>]+>', '', text)
+    
+    # 7. Remove formatting markup: '''bold''', ''italic'', headings == Title ==
+    text = re.sub(r"'''+", '', text)
+    text = re.sub(r"''+", '', text)
+    text = re.sub(r'^=+\s*(.*?)\s*=+\s*$', r'\1', text, flags=re.MULTILINE)
+    
+    # 8. Clean up whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
 # Universal Plaintext Extractor - Raw HTML
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -115,6 +162,7 @@ def download():
         total_pages = 0
 
         while True:
+            # 1. Fetch list of all pages in the main namespace
             list_params = {
                 "action": "query",
                 "list": "allpages",
@@ -133,15 +181,11 @@ def download():
             pages = list_data.get('query', {}).get('allpages', [])
             if not pages: break
 
-            # DEEP EXTRACTION: Using revisions and parsoid/plaintext methods if available
-            # We use 'revisions' with 'content' and 'rvslots=main' as a fallback to 'extracts'
+            # 2. Fetch full wikitext for the batch (50 pages at once)
             page_ids = [str(p['pageid']) for p in pages]
-            
-            # 1. Try 'extracts' first as it's cleaner
             content_params = {
                 "action": "query",
-                "prop": "extracts|revisions",
-                "explaintext": "1",
+                "prop": "revisions",
                 "rvprop": "content",
                 "rvslots": "main",
                 "pageids": "|".join(page_ids),
@@ -149,37 +193,36 @@ def download():
             }
 
             try:
-                content_resp = session.get(api_url, params=content_params, timeout=25)
+                content_resp = session.get(api_url, params=content_params, timeout=30)
                 content_data = content_resp.json()
                 pages_data = content_data.get('query', {}).get('pages', {})
 
                 for page in pages:
                     p_id = str(page['pageid'])
                     title = page['title']
-                    p_data = pages_data.get(p_id, {})
+                    p_info = pages_data.get(p_id, {})
                     
-                    # Try extract first
-                    text = p_data.get('extract', '')
-                    
-                    # If extract is missing or too short, fallback to revision content
-                    if not text or len(text) < 50:
-                        revisions = p_data.get('revisions', [])
-                        if revisions:
-                            # This is raw wikitext, but it's better than nothing
-                            text = revisions[0].get('slots', {}).get('main', {}).get('*', '')
-                            if not text: # Legacy MediaWiki support
-                                text = revisions[0].get('*', '')
+                    # Get raw content from slots or legacy format
+                    raw_content = ""
+                    revisions = p_info.get('revisions', [])
+                    if revisions:
+                        raw_content = revisions[0].get('slots', {}).get('main', {}).get('*', '')
+                        if not raw_content: raw_content = revisions[0].get('*', '')
+
+                    # Deep clean the wikitext to get TRUE plaintext
+                    clean_text = clean_wikitext(raw_content)
 
                     yield f"--- PAGE START: {title} ---\n"
-                    if text and text.strip():
-                        yield text + "\n"
+                    if clean_text:
+                        yield clean_text + "\n"
                     else:
-                        yield "[Content could not be retrieved - possibly protected or empty]\n"
+                        yield "[No content found or page is empty]\n"
                     
                     yield f"--- PAGE END: {title} ---\n\n"
                     total_pages += 1
                 
-                time.sleep(0.2)
+                # Small wait to be safe, but minimal for speed
+                time.sleep(0.05)
                 
             except Exception as e:
                 yield f"\n[ERROR IN BATCH: {str(e)}]\n"
@@ -189,15 +232,12 @@ def download():
             else:
                 break
 
-        yield f"=== END OF DUMP (Total Extracted: {total_pages}) ===\n"
+        yield f"\n=== END OF DUMP (Total Extracted: {total_pages}) ===\n"
 
     response = Response(stream_with_context(generate_dump()), mimetype='text/plain')
     safe_name = netloc.replace('.', '_')
-    response.headers['Content-Disposition'] = f'attachment; filename="EXTRACT_{safe_name}.txt"'
+    response.headers['Content-Disposition'] = f'attachment; filename="FULL_EXTRACT_{safe_name}.txt"'
     return response
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
