@@ -29,41 +29,61 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WIKI_EXTRACTOR_V4</title>
     <style>
-        body { font-family: "Courier New", Courier, monospace; background: #fff; color: #000; line-height: 1.2; padding: 20px; max-width: 900px; margin: 0 auto; }
-        h1 { font-size: 1.5em; text-decoration: underline; margin: 0 0 10px 0; }
+        body { font-family: "Times New Roman", Times, serif; background: #f4f1ea; color: #000; line-height: 1.2; padding: 20px; margin: 0; }
+        h1 { font-size: 1.5em; text-decoration: underline; margin: 0; }
         hr { border: 0; border-top: 1px solid #000; margin: 15px 0; }
-        form { margin-bottom: 20px; }
-        input[type="url"] { width: 70%; padding: 5px; border: 1px solid #000; font-family: monospace; }
-        button { background: #eee; border: 1px solid #000; padding: 5px 15px; cursor: pointer; font-family: monospace; }
-        button:hover { background: #ddd; }
-        #log { border: 1px solid #000; padding: 10px; height: 500px; overflow-y: scroll; background: #f9f9f9; white-space: pre-wrap; font-size: 0.9em; }
-        .meta { color: #666; font-size: 0.8em; }
+        input[type="url"] { width: 400px; padding: 2px; border: 1px solid #000; font-family: "Times New Roman", serif; }
+        button { background: #eee; border: 1px solid #000; padding: 2px 10px; cursor: pointer; font-family: "Times New Roman", serif; }
+        #log { border: 1px solid #000; padding: 5px; height: 400px; overflow-y: scroll; background: #fff; white-space: pre-wrap; font-size: 13px; font-family: monospace; width: 100%; box-sizing: border-box; }
+        .meta { color: #000; font-size: 0.9em; }
         a { color: blue; }
-        .status { font-weight: bold; margin-bottom: 10px; }
+        .status { font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>WIKI PLAINTEXT EXTRACTOR (PARALLEL-DEEP)</h1>
-    <p class="meta">VER: 4.0.1 | BUILD: 2026-05-28 | <a href="https://github.com/example/repo">SOURCE</a></p>
-    <hr>
-    
-    <div class="status" id="status">READY TO EXECUTE.</div>
-    
-    <form id="execForm">
-        <label for="wiki_url">TARGET_URL:</label><br>
-        <input type="url" id="wiki_url" name="wiki_url" placeholder="https://witchhatatelier.telepedia.net/" required autofocus>
-        <button type="submit">EXECUTE</button>
-    </form>
-
-    <div id="log">--- IDLE ---</div>
-    
-    <hr>
-    <p class="meta">
-        * USAGE: ENTER MEDIAWIKI/FANDOM/TELEPEDIA URL.<br>
-        * LOGS SHOW REAL-TIME PROGRESS.<br>
-        * DOWNLOAD STARTS AUTOMATICALLY UPON COMPLETION.<br>
-        * NO TRACKING. NO FRAMEWORKS. 1MB CLUB COMPLIANT.
-    </p>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 900px;">
+        <tr>
+            <td align="left">
+                <h1>WIKI PLAINTEXT EXTRACTOR (PARALLEL-DEEP)</h1>
+                <p class="meta">VER: 4.0.2 | BUILD: 2026-05-28 | <a href="https://github.com/Shouch1/Wiki-Plaintext-Downloader">SOURCE</a></p>
+                <hr>
+            </td>
+        </tr>
+        <tr>
+            <td align="left">
+                <div class="status" id="status">STATUS: READY TO EXECUTE.</div>
+                <br>
+                <form id="execForm">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>TARGET_URL:&nbsp;</td>
+                            <td><input type="url" id="wiki_url" name="wiki_url" placeholder="https://witchhatatelier.telepedia.net/" required autofocus>&nbsp;</td>
+                            <td><button type="submit">EXECUTE</button></td>
+                        </tr>
+                    </table>
+                </form>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td align="left">
+                <b>LOG_OUTPUT:</b><br>
+                <div id="log">--- IDLE ---</div>
+            </td>
+        </tr>
+        <tr>
+            <td align="left">
+                <hr>
+                <p class="meta">
+                    * USAGE: ENTER MEDIAWIKI/FANDOM/TELEPEDIA URL.<br>
+                    * LOGS SHOW REAL-TIME PROGRESS.<br>
+                    * DOWNLOAD STARTS AUTOMATICALLY UPON COMPLETION.<br>
+                    * NO TRACKING. NO FRAMEWORKS. 1MB CLUB COMPLIANT.<br>
+                    * LAYOUT: LEGACY TABLE-BASED.
+                </p>
+            </td>
+        </tr>
+    </table>
 
     <script>
         const form = document.getElementById('execForm');
@@ -78,7 +98,7 @@ HTML_TEMPLATE = """
             formData.append('wiki_url', url);
 
             log.textContent = '--- INITIALIZING STREAM ---\\n';
-            status.textContent = 'EXECUTING...';
+            status.textContent = 'STATUS: EXECUTING...';
             btn.disabled = true;
 
             try {
@@ -114,7 +134,7 @@ HTML_TEMPLATE = """
                     });
                 }
 
-                status.textContent = 'COMPLETE.';
+                status.textContent = 'STATUS: COMPLETE.';
                 log.textContent += '--- JOB FINISHED ---';
                 
                 // Trigger file download
@@ -131,7 +151,7 @@ HTML_TEMPLATE = """
 
             } catch (err) {
                 log.textContent += `\\n[FATAL_ERROR] ${err.message}\\n`;
-                status.textContent = 'FAILED.';
+                status.textContent = 'STATUS: FAILED.';
             } finally {
                 btn.disabled = false;
             }
