@@ -1,6 +1,0 @@
-=== SOURCE: witchhatatelier.telepedia.net ===
-=== EXTRACTED VIA UNIVERSAL PLAINTEXT EXTRACTOR ===
-
-
-[FATAL ERROR FETCHING LIST: Expecting value: line 1 column 1 (char 0)]
-=== END OF DUMP (Total Extracted: 0) ===
