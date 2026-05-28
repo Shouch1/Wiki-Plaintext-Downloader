@@ -4,7 +4,8 @@ import webbrowser
 from threading import Timer
 
 # Ensure the 'api' directory is in the path so we can import index.py
-sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(BASE_DIR, 'api'))
 
 try:
     from index import app
