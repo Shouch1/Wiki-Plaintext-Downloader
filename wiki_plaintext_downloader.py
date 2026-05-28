@@ -44,15 +44,13 @@ HTML_TEMPLATE = """
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 900px;">
         <tr>
             <td align="left">
-                <h1>WIKI PLAINTEXT EXTRACTOR (PARALLEL-DEEP)</h1>
-                <p class="meta">VER: 4.0.2 | BUILD: 2026-05-28 | <a href="https://github.com/Shouch1/Wiki-Plaintext-Downloader">SOURCE</a></p>
+                <h1>WIKI PLAINTEXT EXTRACTOR</h1>
+                <p class="meta">VER: 4.0.5 | BUILD: 2026-05-28 | <a href="https://github.com/Shouch1/Wiki-Plaintext-Downloader">SOURCE</a></p>
                 <hr>
             </td>
         </tr>
         <tr>
             <td align="left">
-                <div class="status" id="status">STATUS: READY TO EXECUTE.</div>
-                <br>
                 <form id="execForm">
                     <table border="0" cellpadding="0" cellspacing="0">
                         <tr>
@@ -67,20 +65,46 @@ HTML_TEMPLATE = """
         </tr>
         <tr>
             <td align="left">
-                <b>LOG_OUTPUT:</b><br>
                 <div id="log">--- IDLE ---</div>
             </td>
         </tr>
         <tr>
             <td align="left">
                 <hr>
-                <p class="meta">
-                    * USAGE: ENTER MEDIAWIKI/FANDOM/TELEPEDIA URL.<br>
-                    * LOGS SHOW REAL-TIME PROGRESS.<br>
-                    * DOWNLOAD STARTS AUTOMATICALLY UPON COMPLETION.<br>
-                    * NO TRACKING. NO FRAMEWORKS. 1MB CLUB COMPLIANT.<br>
-                    * LAYOUT: LEGACY TABLE-BASED.
-                </p>
+                <div style="font-size: 0.9em; white-space: pre-wrap;">
+# Wiki Plaintext Downloader
+
+A high-speed, multi-threaded extraction tool for MediaWiki, Fandom, and Telepedia sites. It converts wiki content into clean, structured plaintext dumps.
+
+## Features
+
+*   **Deep Extraction:** Multi-threaded (8 workers) parallel engine for maximum speed.
+*   **Brutalist UI:** Extremely lightweight, text-forward interface (1MB Club compliant).
+*   **Real-time Logs:** See progress directly in the browser as pages are downloaded.
+*   **Privacy First:** No tracking, no frameworks, no cookies.
+*   **Legacy Design:** Robust table-based layout using Tahoma/Times New Roman.
+
+## Usage
+
+1.  Enter the URL of a MediaWiki, Fandom, or Telepedia site (e.g., `https://witchhatatelier.telepedia.net/`).
+2.  Click **EXECUTE**.
+3.  Monitor the real-time log output.
+4.  The `.txt` dump will download automatically once the extraction is complete.
+
+## Development
+
+### Local Setup
+```bash
+pip install -r requirements.txt
+python wiki_plaintext_downloader.py
+```
+
+### Vercel Deployment
+The project is configured for Vercel via `vercel.json` and `api/index.py`.
+
+## License
+MIT
+                </div>
             </td>
         </tr>
     </table>
@@ -88,7 +112,6 @@ HTML_TEMPLATE = """
     <script>
         const form = document.getElementById('execForm');
         const log = document.getElementById('log');
-        const status = document.getElementById('status');
         const btn = form.querySelector('button');
 
         form.addEventListener('submit', async (e) => {
@@ -98,7 +121,6 @@ HTML_TEMPLATE = """
             formData.append('wiki_url', url);
 
             log.textContent = '--- INITIALIZING STREAM ---\\n';
-            status.textContent = 'STATUS: EXECUTING...';
             btn.disabled = true;
 
             try {
@@ -134,7 +156,6 @@ HTML_TEMPLATE = """
                     });
                 }
 
-                status.textContent = 'STATUS: COMPLETE.';
                 log.textContent += '--- JOB FINISHED ---';
                 
                 // Trigger file download
@@ -151,7 +172,6 @@ HTML_TEMPLATE = """
 
             } catch (err) {
                 log.textContent += `\\n[FATAL_ERROR] ${err.message}\\n`;
-                status.textContent = 'STATUS: FAILED.';
             } finally {
                 btn.disabled = false;
             }
