@@ -74,13 +74,16 @@ HTML_TEMPLATE = """
         <tr>
             <td align="left">
                 <hr>
-                <p class="meta">
-                    * USAGE: ENTER MEDIAWIKI/FANDOM/TELEPEDIA URL.<br>
-                    * LOGS SHOW REAL-TIME PROGRESS.<br>
-                    * DOWNLOAD STARTS AUTOMATICALLY UPON COMPLETION.<br>
-                    * NO TRACKING. NO FRAMEWORKS. 1MB CLUB COMPLIANT.<br>
-                    * LAYOUT: LEGACY TABLE-BASED.
-                </p>
+                <b>WIKI PLAINTEXT DOWNLOADER</b><br>
+                A high-speed, multi-threaded extraction tool for MediaWiki, Fandom, and Telepedia sites.<br><br>
+                <b>USAGE / FEATURES:</b><br>
+                * USAGE: ENTER MEDIAWIKI/FANDOM/TELEPEDIA URL.<br>
+                * LOGS SHOW REAL-TIME PROGRESS.<br>
+                * DOWNLOAD STARTS AUTOMATICALLY UPON COMPLETION.<br>
+                * LOCAL_EXECUTION: EXTRACTION RUNS IN YOUR BROWSER VIA STREAMING API.<br>
+                * NO TRACKING. NO FRAMEWORKS. 1MB CLUB COMPLIANT.<br>
+                * LAYOUT: LEGACY TABLE-BASED.<br>
+                * COMPATIBILITY: OPTIMIZED FOR MEDIAWIKI-BASED SITES (API.PHP REQUIRED).
             </td>
         </tr>
     </table>
