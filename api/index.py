@@ -4,44 +4,30 @@ import re
 from urllib.parse import urlparse
 from flask import Flask, request, Response, stream_with_context, render_template_string
 import requests
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
 
-def clean_wikitext(text):
+def clean_html(html_content):
     """
-    A robust, fast regex-based cleaner to convert Wikitext to Plaintext.
-    Prioritizes keeping all human-readable content while stripping technical markup.
+    Converts MediaWiki HTML output into clean, structured plaintext.
+    Handles tables, lists, and hidden elements correctly.
     """
-    if not text: return ""
+    if not html_content: return ""
+    soup = BeautifulSoup(html_content, 'lxml')
     
-    # 1. Remove comments
-    text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
-    
-    # 2. Remove File and Category links (usually at the end or side)
-    text = re.sub(r'\[\[(File|Category|Image|Media):.*?\]\]', '', text, flags=re.IGNORECASE | re.DOTALL)
-    
-    # 3. Handle internal links: [[Target|Display]] -> Display, [[Target]] -> Target
-    text = re.sub(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]', r'\1', text)
-    
-    # 4. Remove templates {{...}}. This is tricky because they can be nested.
-    # We do a few passes to catch nested templates.
-    for _ in range(5):
-        text = re.sub(r'\{\{[^{}]*\}\}', '', text, flags=re.DOTALL)
-    
-    # 5. Remove tables {|...|}
-    text = re.sub(r'\{\|.*?\|\}', '', text, flags=re.DOTALL)
-    
-    # 6. Remove HTML tags like <ref>, <gallery>, etc. and their content
-    text = re.sub(r'<(ref|gallery|small|big|blockquote|cite|div|span|table|tr|td|th).*?>.*?</\1>', '', text, flags=re.IGNORECASE | re.DOTALL)
-    # Remove self-closing tags or tags without content
-    text = re.sub(r'<[^>]+>', '', text)
-    
-    # 7. Remove formatting markup: '''bold''', ''italic'', headings == Title ==
-    text = re.sub(r"'''+", '', text)
-    text = re.sub(r"''+", '', text)
-    text = re.sub(r'^=+\s*(.*?)\s*=+\s*$', r'\1', text, flags=re.MULTILINE)
-    
-    # 8. Clean up whitespace
+    # Remove technical elements that shouldn't be in a plaintext dump
+    for element in soup(['script', 'style', 'noscript', 'figure', 'blockquote']):
+        element.decompose()
+        
+    # Remove specific wiki elements
+    for class_to_hide in ['mw-editsection', 'reference', 'toc', 'infobox', 'navbox']:
+        for element in soup.find_all(class_=class_to_hide):
+            element.decompose()
+
+    # Get text and clean up whitespace
+    text = soup.get_text(separator='\n')
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
@@ -68,6 +54,7 @@ HTML_TEMPLATE = """
         .info { color: #000; }
         .success { color: green; font-weight: bold; }
         .error { color: red; font-weight: bold; }
+        .progress { color: blue; font-weight: bold; }
         hr { border: 0; border-top: 1px solid #000; }
     </style>
 </head>
@@ -76,7 +63,7 @@ HTML_TEMPLATE = """
         <tr>
             <td>
                 <h1>Universal Plaintext Extractor</h1>
-                <p><b>Extract deep plaintext content from MediaWiki, Fandom, and Telepedia sites.</b></p>
+                <p><b>Deep multi-threaded extraction for MediaWiki & Fandom.</b></p>
                 <hr>
             </td>
         </tr>
@@ -127,9 +114,9 @@ HTML_TEMPLATE = """
             submitBtn.disabled = true;
             submitBtn.value = "RUNNING...";
             
-            log("INITIATING DEEP EXTRACTION...", "info");
-            log("ESTABLISHING HANDSHAKE...", "success");
-            log("CHECK DOWNLOADS FOLDER FOR OUTPUT", "error");
+            log("INITIALIZING PARALLEL ENGINE...", "info");
+            log("ESTABLISHING HIGH-SPEED CONNECTION...", "success");
+            log("DOWNLOADING FULL CONTENT (CHECK FOLDER)...", "progress");
         };
     </script>
 </body>
@@ -153,16 +140,34 @@ def download():
 
     def generate_dump():
         session = requests.Session()
-        session.headers.update({'User-Agent': 'UniversalPlaintextExtractor/3.0'})
+        session.headers.update({'User-Agent': 'UniversalPlaintextExtractor/4.0 (Parallel-Deep)'})
 
         yield f"=== SOURCE: {netloc} ===\n"
-        yield f"=== EXTRACTED VIA UNIVERSAL PLAINTEXT EXTRACTOR ===\n\n"
+        yield f"=== EXPORTED VIA UNIVERSAL PLAINTEXT EXTRACTOR v4 (PARALLEL-DEEP) ===\n\n"
 
         apcontinue = None
-        total_pages = 0
+        total_extracted = 0
+
+        # Create a persistent session for threads
+        def fetch_and_clean_page(title):
+            try:
+                params = {
+                    "action": "parse",
+                    "page": title,
+                    "prop": "text",
+                    "format": "json",
+                    "disablelimitreport": 1,
+                    "disableeditsection": 1
+                }
+                resp = session.get(api_url, params=params, timeout=20)
+                data = resp.json()
+                html = data.get('parse', {}).get('text', {}).get('*', '')
+                return title, clean_html(html)
+            except Exception as e:
+                return title, f"[ERROR PARSING PAGE: {str(e)}]"
 
         while True:
-            # 1. Fetch list of all pages in the main namespace
+            # 1. Fetch titles list (50 at a time)
             list_params = {
                 "action": "query",
                 "list": "allpages",
@@ -180,64 +185,36 @@ def download():
 
             pages = list_data.get('query', {}).get('allpages', [])
             if not pages: break
-
-            # 2. Fetch full wikitext for the batch (50 pages at once)
-            page_ids = [str(p['pageid']) for p in pages]
-            content_params = {
-                "action": "query",
-                "prop": "revisions",
-                "rvprop": "content",
-                "rvslots": "main",
-                "pageids": "|".join(page_ids),
-                "format": "json"
-            }
-
-            try:
-                content_resp = session.get(api_url, params=content_params, timeout=30)
-                content_data = content_resp.json()
-                pages_data = content_data.get('query', {}).get('pages', {})
-
-                for page in pages:
-                    p_id = str(page['pageid'])
-                    title = page['title']
-                    p_info = pages_data.get(p_id, {})
-                    
-                    # Get raw content from slots or legacy format
-                    raw_content = ""
-                    revisions = p_info.get('revisions', [])
-                    if revisions:
-                        raw_content = revisions[0].get('slots', {}).get('main', {}).get('*', '')
-                        if not raw_content: raw_content = revisions[0].get('*', '')
-
-                    # Deep clean the wikitext to get TRUE plaintext
-                    clean_text = clean_wikitext(raw_content)
-
+            
+            titles = [p['title'] for p in pages]
+            
+            # 2. Parallel Extraction (8 threads for maximum speed)
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                future_to_title = {executor.submit(fetch_and_clean_page, title): title for title in titles}
+                
+                # We want to yield results as they complete to keep the stream alive
+                for future in as_completed(future_to_title):
+                    title, content = future.result()
                     yield f"--- PAGE START: {title} ---\n"
-                    if clean_text:
-                        yield clean_text + "\n"
+                    if content:
+                        yield content + "\n"
                     else:
-                        yield "[No content found or page is empty]\n"
-                    
+                        yield "[No readable content found on this page]\n"
                     yield f"--- PAGE END: {title} ---\n\n"
-                    total_pages += 1
-                
-                # Small wait to be safe, but minimal for speed
-                time.sleep(0.05)
-                
-            except Exception as e:
-                yield f"\n[ERROR IN BATCH: {str(e)}]\n"
+                    total_extracted += 1
 
             if 'continue' in list_data and 'apcontinue' in list_data['continue']:
                 apcontinue = list_data['continue']['apcontinue']
+                time.sleep(0.05)
             else:
                 break
 
-        yield f"\n=== END OF DUMP (Total Extracted: {total_pages}) ===\n"
+        yield f"\n=== END OF DUMP (Total Extracted: {total_extracted}) ===\n"
 
     response = Response(stream_with_context(generate_dump()), mimetype='text/plain')
     safe_name = netloc.replace('.', '_')
-    response.headers['Content-Disposition'] = f'attachment; filename="FULL_EXTRACT_{safe_name}.txt"'
+    response.headers['Content-Disposition'] = f'attachment; filename="FULL_DUMP_{safe_name}.txt"'
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
