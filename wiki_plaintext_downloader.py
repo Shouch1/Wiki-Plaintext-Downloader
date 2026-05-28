@@ -27,25 +27,29 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WIKI_EXTRACTOR_V4</title>
+    <title>Wiki Plaintext Extractor</title>
     <style>
-        body { font-family: Tahoma, Verdana, sans-serif; background: #f4f1ea; color: #000; line-height: 1.2; padding: 20px; margin: 0; }
-        h1 { font-size: 1.5em; text-decoration: underline; margin: 0; }
-        hr { border: 0; border-top: 1px solid #000; margin: 15px 0; }
-        input[type="url"] { width: 400px; padding: 2px; border: 1px solid #000; font-family: Tahoma, sans-serif; }
-        button { background: #eee; border: 1px solid #000; padding: 2px 10px; cursor: pointer; font-family: Tahoma, sans-serif; }
-        #log { border: 1px solid #000; padding: 5px; height: 400px; overflow-y: scroll; background: #fff; white-space: pre-wrap; font-size: 13px; font-family: monospace; width: 100%; box-sizing: border-box; }
-        .meta { color: #000; font-size: 0.9em; }
+        body { font-family: Tahoma, Verdana, sans-serif; background: #f4f1ea; color: #000; line-height: 1.4; padding: 30px; margin: 0; }
+        h1 { font-size: 24px; text-decoration: underline; margin: 0 0 5px 0; font-weight: bold; }
+        h2 { font-size: 18px; margin: 20px 0 10px 0; font-weight: bold; border-bottom: 1px solid #000; display: inline-block; }
+        p, li, td { font-size: 14px; margin: 5px 0; }
+        hr { border: 0; border-top: 1px solid #000; margin: 20px 0; }
+        input[type="url"] { width: 400px; padding: 4px; border: 1px solid #000; font-family: Tahoma, sans-serif; font-size: 14px; }
+        button { background: #eee; border: 1px solid #000; padding: 4px 15px; cursor: pointer; font-family: Tahoma, sans-serif; font-size: 14px; }
+        button:hover { background: #ddd; }
+        #log { border: 1px solid #000; padding: 10px; height: 350px; overflow-y: scroll; background: #fff; white-space: pre-wrap; font-size: 12px; font-family: monospace; width: 100%; box-sizing: border-box; }
+        .meta { color: #444; font-size: 12px; }
         a { color: blue; }
-        .status { font-weight: bold; }
+        ul { padding-left: 20px; margin: 10px 0; }
+        ol { padding-left: 20px; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 900px;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 800px;">
         <tr>
             <td align="left">
-                <h1>WIKI PLAINTEXT EXTRACTOR</h1>
-                <p class="meta">VER: 4.0.5 | BUILD: 2026-05-28 | <a href="https://github.com/Shouch1/Wiki-Plaintext-Downloader">SOURCE</a></p>
+                <h1>Wiki Plaintext Extractor</h1>
+                <p class="meta">Version 4.0.6 | Build 2026-05-28 | <a href="https://github.com/Shouch1/Wiki-Plaintext-Downloader">Source Code</a></p>
                 <hr>
             </td>
         </tr>
@@ -54,9 +58,9 @@ HTML_TEMPLATE = """
                 <form id="execForm">
                     <table border="0" cellpadding="0" cellspacing="0">
                         <tr>
-                            <td>TARGET_URL:&nbsp;</td>
+                            <td>Target URL:&nbsp;</td>
                             <td><input type="url" id="wiki_url" name="wiki_url" placeholder="https://witchhatatelier.telepedia.net/" required autofocus>&nbsp;</td>
-                            <td><button type="submit">EXECUTE</button></td>
+                            <td><button type="submit">Execute</button></td>
                         </tr>
                     </table>
                 </form>
@@ -65,46 +69,35 @@ HTML_TEMPLATE = """
         </tr>
         <tr>
             <td align="left">
-                <div id="log">--- IDLE ---</div>
+                <div id="log">Status: Idle</div>
             </td>
         </tr>
         <tr>
             <td align="left">
                 <hr>
-                <div style="font-size: 0.9em; white-space: pre-wrap;">
-# Wiki Plaintext Downloader
+                <h2>Project Overview</h2>
+                <p>A high-speed, multi-threaded extraction tool for MediaWiki, Fandom, and Telepedia platforms. This utility converts entire wiki databases into clean, structured plaintext files suitable for archival, search indexing, or LLM training.</p>
+                
+                <h2>Core Functionality</h2>
+                <ul>
+                    <li><b>Parallel Processing:</b> Utilizes 8 concurrent workers for rapid page retrieval.</li>
+                    <li><b>Direct Streaming:</b> Data is streamed directly to the browser to handle large datasets without server timeouts.</li>
+                    <li><b>Real-time Monitoring:</b> Live download logs provide immediate feedback on extraction progress.</li>
+                    <li><b>Content Sanitization:</b> Automatically strips HTML, scripts, and wiki-specific technical metadata.</li>
+                </ul>
 
-A high-speed, multi-threaded extraction tool for MediaWiki, Fandom, and Telepedia sites. It converts wiki content into clean, structured plaintext dumps.
+                <h2>Usage Instructions</h2>
+                <ol>
+                    <li>Provide the base URL of a MediaWiki-powered site.</li>
+                    <li>Click <b>Execute</b> to begin the multi-threaded extraction.</li>
+                    <li>Monitor the log box for active downloads.</li>
+                    <li>The system will automatically trigger a .txt download upon completion.</li>
+                </ol>
 
-## Features
-
-*   **Deep Extraction:** Multi-threaded (8 workers) parallel engine for maximum speed.
-*   **Brutalist UI:** Extremely lightweight, text-forward interface (1MB Club compliant).
-*   **Real-time Logs:** See progress directly in the browser as pages are downloaded.
-*   **Privacy First:** No tracking, no frameworks, no cookies.
-*   **Legacy Design:** Robust table-based layout using Tahoma/Times New Roman.
-
-## Usage
-
-1.  Enter the URL of a MediaWiki, Fandom, or Telepedia site (e.g., `https://witchhatatelier.telepedia.net/`).
-2.  Click **EXECUTE**.
-3.  Monitor the real-time log output.
-4.  The `.txt` dump will download automatically once the extraction is complete.
-
-## Development
-
-### Local Setup
-```bash
-pip install -r requirements.txt
-python wiki_plaintext_downloader.py
-```
-
-### Vercel Deployment
-The project is configured for Vercel via `vercel.json` and `api/index.py`.
-
-## License
-MIT
-                </div>
+                <h2>Technical Implementation</h2>
+                <p>The system is built on a Python backend using Flask and Requests, with a lightweight JavaScript frontend for stream handling. Local execution ensures that extraction remains stable even for wikis with thousands of pages.</p>
+                
+                <p class="meta">This tool is provided under the MIT License. No tracking or external frameworks are used.</p>
             </td>
         </tr>
     </table>
@@ -120,7 +113,7 @@ MIT
             const formData = new FormData();
             formData.append('wiki_url', url);
 
-            log.textContent = '--- INITIALIZING STREAM ---\\n';
+            log.textContent = 'Status: Initializing stream...\\n';
             btn.disabled = true;
 
             try {
@@ -129,7 +122,7 @@ MIT
                     body: formData
                 });
 
-                if (!response.ok) throw new Error('SERVER_ERROR');
+                if (!response.ok) throw new Error('Server Error');
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -142,12 +135,11 @@ MIT
                     const chunk = decoder.decode(value, { stream: true });
                     fullContent += chunk;
                     
-                    // Extract page titles for logging
                     const lines = chunk.split('\\n');
                     lines.forEach(line => {
                         if (line.startsWith('--- PAGE START:')) {
                             const title = line.replace('--- PAGE START: ', '').replace(' ---', '');
-                            log.textContent += `[DOWNLOADED] ${title}\\n`;
+                            log.textContent += `[Success] Downloaded: ${title}\\n`;
                             log.scrollTop = log.scrollHeight;
                         } else if (line.startsWith('=== END OF DUMP')) {
                             log.textContent += `\\n${line}\\n`;
@@ -156,9 +148,8 @@ MIT
                     });
                 }
 
-                log.textContent += '--- JOB FINISHED ---';
+                log.textContent += 'Status: Job finished.';
                 
-                // Trigger file download
                 const blob = new Blob([fullContent], { type: 'text/plain' });
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -171,7 +162,7 @@ MIT
                 window.URL.revokeObjectURL(downloadUrl);
 
             } catch (err) {
-                log.textContent += `\\n[FATAL_ERROR] ${err.message}\\n`;
+                log.textContent += `\\n[Error] ${err.message}\\n`;
             } finally {
                 btn.disabled = false;
             }
