@@ -29,11 +29,11 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WIKI_EXTRACTOR_V4</title>
     <style>
-        body { font-family: "Times New Roman", Times, serif; background: #f4f1ea; color: #000; line-height: 1.2; padding: 20px; margin: 0; }
+        body { font-family: Tahoma, Verdana, sans-serif; background: #f4f1ea; color: #000; line-height: 1.2; padding: 20px; margin: 0; }
         h1 { font-size: 1.5em; text-decoration: underline; margin: 0; }
         hr { border: 0; border-top: 1px solid #000; margin: 15px 0; }
-        input[type="url"] { width: 400px; padding: 2px; border: 1px solid #000; font-family: "Times New Roman", serif; }
-        button { background: #eee; border: 1px solid #000; padding: 2px 10px; cursor: pointer; font-family: "Times New Roman", serif; }
+        input[type="url"] { width: 400px; padding: 2px; border: 1px solid #000; font-family: Tahoma, sans-serif; }
+        button { background: #eee; border: 1px solid #000; padding: 2px 10px; cursor: pointer; font-family: Tahoma, sans-serif; }
         #log { border: 1px solid #000; padding: 5px; height: 400px; overflow-y: scroll; background: #fff; white-space: pre-wrap; font-size: 13px; font-family: monospace; width: 100%; box-sizing: border-box; }
         .meta { color: #000; font-size: 0.9em; }
         a { color: blue; }
