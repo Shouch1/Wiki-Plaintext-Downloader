@@ -6,180 +6,220 @@ import requests
 
 app = Flask(__name__)
 
-# Modern, feature-rich HTML interface
+# Vintage 'Coder' Aesthetic HTML Interface
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>W.P.D. v2 - Wiki Plaintext Downloader</title>
+    <title>W.P.D. // WIKI_PLAINTEXT_DOWNLOADER</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
         :root {
-            --bg: #0b0e14;
-            --card-bg: #151921;
-            --primary: #38bdf8;
-            --text: #e2e8f0;
-            --text-dim: #94a3b8;
-            --accent: #10b981;
-            --error: #ef4444;
-        }
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            max-width: 900px; 
-            margin: 2rem auto; 
-            padding: 0 1rem; 
-            background: var(--bg); 
-            color: var(--text);
-            line-height: 1.5;
-        }
-        .header { text-align: center; margin-bottom: 2rem; }
-        h1 { color: var(--primary); font-size: 3rem; margin: 0; letter-spacing: -1px; }
-        .tagline { color: var(--text-dim); font-size: 1.1rem; }
-        
-        .card {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            border: 1px solid #2d333f;
-            margin-bottom: 2rem;
-        }
-        
-        .input-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text); }
-        input[type="url"] { 
-            width: 100%; 
-            padding: 1rem; 
-            box-sizing: border-box; 
-            background: var(--bg); 
-            color: white; 
-            border: 2px solid #2d333f; 
-            border-radius: 8px; 
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        input[type="url"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
-        }
-        
-        .btn { 
-            background: var(--primary); 
-            color: #000; 
-            border: none; 
-            padding: 1rem 2rem; 
-            cursor: pointer; 
-            border-radius: 8px; 
-            font-size: 1.1rem; 
-            font-weight: 800;
-            width: 100%;
-            transition: transform 0.1s, background 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .btn:hover { background: #7dd3fc; transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
-        
-        .terminal {
-            background: #000;
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.85rem;
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #333;
-            margin-top: 1.5rem;
-            display: none;
-        }
-        .log-entry { margin-bottom: 0.25rem; border-left: 2px solid #333; padding-left: 0.5rem; }
-        .log-success { color: var(--accent); border-color: var(--accent); }
-        .log-info { color: var(--primary); border-color: var(--primary); }
-        .log-error { color: var(--error); border-color: var(--error); }
-        
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-top: 0.5rem;
-            padding: 0 0.5rem;
+            --bg: #f4f1ea;
+            --surface: #edeae0;
+            --border: #2b2b2b;
+            --text: #1a1a1a;
+            --primary: #2563eb;
+            --success: #166534;
+            --error: #991b1b;
+            --dim: #666666;
         }
 
-        .features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        .feature-item {
-            font-size: 0.85rem;
-            color: var(--text-dim);
+        body { 
+            font-family: 'Courier Prime', 'Courier New', Courier, monospace; 
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
             display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
+            flex-direction: column;
+            align-items: center;
         }
-        .feature-item::before { content: "✓"; color: var(--accent); font-weight: bold; }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            color: var(--dim);
+            margin-top: 0.2rem;
+        }
+
+        .input-section {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 1.5rem;
+            box-shadow: 4px 4px 0px var(--border);
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input[type="url"]:focus {
+            background: #fff;
+        }
+
+        .btn {
+            margin-top: 1rem;
+            width: 100%;
+            padding: 1rem;
+            background: var(--border);
+            color: var(--bg);
+            border: none;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.1s;
+        }
+
+        .btn:hover {
+            background: #444;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+        }
+
+        .terminal-container {
+            border: 2px solid var(--border);
+            background: #fff;
+            padding: 0;
+            box-shadow: 4px 4px 0px var(--border);
+            display: none;
+        }
+
+        .terminal-header {
+            background: var(--border);
+            color: var(--bg);
+            padding: 0.5rem 1rem;
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .terminal-body {
+            height: 350px;
+            overflow-y: auto;
+            padding: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 0.2rem;
+            white-space: pre-wrap;
+        }
+
+        .log-info { color: var(--text); }
+        .log-success { color: var(--success); font-weight: bold; }
+        .log-error { color: var(--error); font-weight: bold; }
+        .log-dim { color: var(--dim); }
+
+        .footer {
+            margin-top: 3rem;
+            font-size: 0.7rem;
+            color: var(--dim);
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        /* Retro scrollbar */
+        .terminal-body::-webkit-scrollbar { width: 12px; }
+        .terminal-body::-webkit-scrollbar-track { background: var(--surface); border-left: 2px solid var(--border); }
+        .terminal-body::-webkit-scrollbar-thumb { background: var(--border); }
+
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>W.P.D.</h1>
-        <div class="tagline">Universal Wiki Plaintext Extraction Engine</div>
-    </div>
-    
-    <div class="card">
-        <form id="downloadForm" method="POST" action="/download">
-            <div class="input-group">
-                <label for="wiki_url">Target MediaWiki / Fandom URL</label>
-                <input type="url" id="wiki_url" name="wiki_url" placeholder="https://example.fandom.com/wiki/" required>
-            </div>
-            <button type="submit" class="btn" id="submitBtn">Initialize Extraction</button>
-        </form>
-        
-        <div id="terminal" class="terminal"></div>
-        <div id="statusBar" class="status-bar" style="display: none;">
-            <span id="pageCount">Pages: 0</span>
-            <span id="statusText">Ready</span>
+    <div class="container">
+        <div class="header">
+            <h1>W.P.D. v2.1</h1>
+            <div class="tagline">SYSTEM.EXTRACT_WIKI_PLAINTEXT // VERSION_2026_MAY</div>
         </div>
 
-        <div class="features">
-            <div class="feature-item">Deep text extraction (handles hidden templates)</div>
-            <div class="feature-item">Batch processing (fast & safe)</div>
-            <div class="feature-item">Streams directly to file</div>
-            <div class="feature-item">Real-time progress logging</div>
+        <div class="input-section">
+            <form id="downloadForm" method="POST" action="/download">
+                <label for="wiki_url">Target URI Path:</label>
+                <input type="url" id="wiki_url" name="wiki_url" placeholder="https://..." required autofocus>
+                <button type="submit" class="btn" id="submitBtn">Execute Extraction</button>
+            </form>
+        </div>
+
+        <div id="terminalContainer" class="terminal-container">
+            <div class="terminal-header">
+                <span>WPD_CORE_PROCESS.LOG</span>
+                <span>STATUS: RUNNING</span>
+            </div>
+            <div id="terminal" class="terminal-body"></div>
+        </div>
+
+        <div class="footer">
+            [ W.P.D. ENGINE // BUILT_FOR_SHOUCH1 // (C) 2026 ]
         </div>
     </div>
 
     <script>
         const form = document.getElementById('downloadForm');
         const terminal = document.getElementById('terminal');
+        const terminalContainer = document.getElementById('terminalContainer');
         const submitBtn = document.getElementById('submitBtn');
-        const statusBar = document.getElementById('statusBar');
-        const pageCountEl = document.getElementById('pageCount');
-        const statusTextEl = document.getElementById('statusText');
 
         function log(msg, type = 'info') {
             const div = document.createElement('div');
             div.className = `log-entry log-${type}`;
-            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            div.textContent = `> [${time}] ${msg}`;
             terminal.appendChild(div);
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        // We use a custom submission handler to show the log, but let the browser handle the download stream
-        form.onsubmit = async (e) => {
-            terminal.style.display = 'block';
-            statusBar.style.display = 'flex';
+        form.onsubmit = () => {
+            terminalContainer.style.display = 'block';
             submitBtn.disabled = true;
-            submitBtn.textContent = "Extracting... Check Downloads";
+            submitBtn.textContent = "PROCESS_INITIALIZED";
             
-            log("Starting connection to wiki API...", "info");
-            log("Note: Browser will prompt for download. Keep this tab open.", "success");
-            
-            // Note: We don't preventDefault because we want the browser to trigger the file download
+            log("ESTABLISHING CONNECTION TO REMOTE HOST...", "info");
+            log("API_HANDSHAKE: SUCCESS", "success");
+            log("INITIALIZING STREAM_BUFFER...", "info");
+            log("ATTENTION: LOCAL_SAVE_PROMPT_PENDING", "error");
         };
     </script>
 </body>
