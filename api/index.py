@@ -148,35 +148,42 @@ def download():
             if not pages:
                 break
 
-            # 2. Iterate through the fetched page IDs and request their plaintext extracts
-            for page in pages:
-                title = page['title']
-                page_id = page['pageid']
+            # 2. Batch the page IDs to fetch multiple extracts at once (up to 20 at a time)
+            page_ids = [str(p['pageid']) for p in pages]
+            
+            # MediaWiki allows batching multiple page IDs with a pipe |
+            content_params = {
+                "action": "query",
+                "prop": "extracts",
+                "explaintext": "1",
+                "pageids": "|".join(page_ids),
+                "format": "json"
+            }
 
-                content_params = {
-                    "action": "query",
-                    "prop": "extracts",
-                    "explaintext": "1", # Strips out wikitext markup to return raw text
-                    "pageids": str(page_id),
-                    "format": "json"
-                }
+            try:
+                content_resp = session.get(api_url, params=content_params, timeout=15)
+                content_data = content_resp.json()
+                pages_data = content_data.get('query', {}).get('pages', {})
 
-                try:
-                    content_resp = session.get(api_url, params=content_params, timeout=10)
-                    content_data = content_resp.json()
-                    extract = content_data.get('query', {}).get('pages', {}).get(str(page_id), {}).get('extract', '')
+                # Iterate through the original list to maintain order
+                for page in pages:
+                    p_id = str(page['pageid'])
+                    title = page['title']
+                    extract = pages_data.get(p_id, {}).get('extract', '')
 
                     yield f"--- PAGE: {title} ---\n"
                     if extract and extract.strip():
                         yield extract + "\n\n"
                     else:
                         yield "[No plaintext extract available, page is a redirect, or page is empty]\n\n"
-
-                    page_count += 1
-                    time.sleep(0.05) # Slightly faster throttle for web environment
                     
-                except Exception as e:
-                    yield f"\n[ERROR FETCHING CONTENT FOR {title}: {str(e)}]\n\n"
+                    page_count += 1
+                
+                # Small wait between batches (instead of every page)
+                time.sleep(0.1)
+                
+            except Exception as e:
+                yield f"\n[ERROR FETCHING BATCH CONTENT: {str(e)}]\n\n"
 
             # 3. Handle MediaWiki pagination
             if 'continue' in list_data and 'apcontinue' in list_data['continue']:
