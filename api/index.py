@@ -1,25 +1,12 @@
-import time
-import json
-from urllib.parse import urlparse
-from flask import Flask, request, Response, stream_with_context, render_template_string
-import requests
-
-app = Flask(__name__)
-
-# Raw 'Old School' HTML Interface
+# Universal Plaintext Extractor - Raw HTML
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>W.P.D. // WIKI_PLAINTEXT_DOWNLOADER</title>
+    <title>Universal Plaintext Extractor</title>
     <style>
-        body { 
-            font-family: sans-serif; 
-            background-color: #f4f1ea; 
-            color: #000; 
-            margin: 20px;
-        }
+        body { font-family: sans-serif; background-color: #f4f1ea; color: #000; margin: 20px; }
         table { border-collapse: collapse; width: 100%; max-width: 800px; }
         .log-box { 
             border: 1px solid #000; 
@@ -41,8 +28,8 @@ HTML_TEMPLATE = """
     <table border="0">
         <tr>
             <td>
-                <h1>W.P.D. v2.2</h1>
-                <p><b>Universal Wiki Plaintext Extraction Engine</b></p>
+                <h1>Universal Plaintext Extractor</h1>
+                <p><b>Extract deep plaintext content from MediaWiki, Fandom, and Telepedia sites.</b></p>
                 <hr>
             </td>
         </tr>
@@ -50,8 +37,8 @@ HTML_TEMPLATE = """
             <td>
                 <form id="downloadForm" method="POST" action="/download">
                     <p>
-                        Target Wiki URL:<br>
-                        <input type="url" id="wiki_url" name="wiki_url" size="60" required autofocus>
+                        Target URL:<br>
+                        <input type="url" id="wiki_url" name="wiki_url" size="60" placeholder="https://..." required autofocus>
                     </p>
                     <p>
                         <input type="submit" id="submitBtn" value="Execute Extraction">
@@ -61,14 +48,13 @@ HTML_TEMPLATE = """
         </tr>
         <tr>
             <td>
-                <div id="logHeader" style="display:none;"><p><b>SYSTEM_LOG:</b></p></div>
+                <div id="logHeader" style="display:none;"><p><b>log:</b></p></div>
                 <div id="terminal" class="log-box"></div>
             </td>
         </tr>
         <tr>
             <td>
                 <hr>
-                <p><small>[ W.P.D. ENGINE // VERSION 2.2 // NO_STYLING_STRICT_FUNCTIONAL ]</small></p>
             </td>
         </tr>
     </table>
@@ -94,10 +80,9 @@ HTML_TEMPLATE = """
             submitBtn.disabled = true;
             submitBtn.value = "RUNNING...";
             
-            log("INITIATING API CONNECTION...", "info");
-            log("HANDSHAKE SUCCESSFUL", "success");
-            log("STREAMING DATA TO LOCAL DISK", "info");
-            log("CHECK BROWSER DOWNLOADS FOR OUTPUT", "error");
+            log("INITIATING DEEP EXTRACTION...", "info");
+            log("ESTABLISHING HANDSHAKE...", "success");
+            log("CHECK DOWNLOADS FOLDER FOR OUTPUT", "error");
         };
     </script>
 </body>
@@ -114,24 +99,22 @@ def download():
     if not url: return "URL Required", 400
         
     parsed = urlparse(url)
-    # Ensure we point to the correct api.php endpoint
     netloc = parsed.netloc
     path = parsed.path.split('/wiki/')[0] if '/wiki/' in parsed.path else parsed.path
     if not path.endswith('/'): path += '/'
     api_url = f"{parsed.scheme}://{netloc}{path}api.php"
 
-    def generate_wiki_dump():
+    def generate_dump():
         session = requests.Session()
-        session.headers.update({'User-Agent': 'WPD-Engine-v2/2.0 (High-Throughput Extraction)'})
+        session.headers.update({'User-Agent': 'UniversalPlaintextExtractor/3.0'})
 
-        yield f"=== WIKI DUMP: {netloc} ===\n"
-        yield f"=== EXPORTED VIA W.P.D. v2 ===\n\n"
+        yield f"=== SOURCE: {netloc} ===\n"
+        yield f"=== EXTRACTED VIA UNIVERSAL PLAINTEXT EXTRACTOR ===\n\n"
 
         apcontinue = None
         total_pages = 0
 
         while True:
-            # 1. Fetch list of all pages
             list_params = {
                 "action": "query",
                 "list": "allpages",
@@ -150,38 +133,52 @@ def download():
             pages = list_data.get('query', {}).get('allpages', [])
             if not pages: break
 
-            # 2. Batch Content Extraction (Improved prop=extracts for better plaintext)
+            # DEEP EXTRACTION: Using revisions and parsoid/plaintext methods if available
+            # We use 'revisions' with 'content' and 'rvslots=main' as a fallback to 'extracts'
             page_ids = [str(p['pageid']) for p in pages]
+            
+            # 1. Try 'extracts' first as it's cleaner
             content_params = {
                 "action": "query",
-                "prop": "extracts",
+                "prop": "extracts|revisions",
                 "explaintext": "1",
-                "exlimit": "max", # Get as many as possible
+                "rvprop": "content",
+                "rvslots": "main",
                 "pageids": "|".join(page_ids),
                 "format": "json"
             }
 
             try:
-                content_resp = session.get(api_url, params=content_params, timeout=20)
+                content_resp = session.get(api_url, params=content_params, timeout=25)
                 content_data = content_resp.json()
                 pages_data = content_data.get('query', {}).get('pages', {})
 
                 for page in pages:
                     p_id = str(page['pageid'])
                     title = page['title']
-                    extract = pages_data.get(p_id, {}).get('extract', '')
+                    p_data = pages_data.get(p_id, {})
+                    
+                    # Try extract first
+                    text = p_data.get('extract', '')
+                    
+                    # If extract is missing or too short, fallback to revision content
+                    if not text or len(text) < 50:
+                        revisions = p_data.get('revisions', [])
+                        if revisions:
+                            # This is raw wikitext, but it's better than nothing
+                            text = revisions[0].get('slots', {}).get('main', {}).get('*', '')
+                            if not text: # Legacy MediaWiki support
+                                text = revisions[0].get('*', '')
 
                     yield f"--- PAGE START: {title} ---\n"
-                    if extract and extract.strip():
-                        yield extract + "\n"
+                    if text and text.strip():
+                        yield text + "\n"
                     else:
-                        # Fallback: if extracts failed, page might be too complex or a redirect
-                        yield "[No plaintext extract available for this page]\n"
+                        yield "[Content could not be retrieved - possibly protected or empty]\n"
                     
                     yield f"--- PAGE END: {title} ---\n\n"
                     total_pages += 1
                 
-                # Safety throttle between batches
                 time.sleep(0.2)
                 
             except Exception as e:
@@ -194,10 +191,13 @@ def download():
 
         yield f"=== END OF DUMP (Total Extracted: {total_pages}) ===\n"
 
-    response = Response(stream_with_context(generate_wiki_dump()), mimetype='text/plain')
+    response = Response(stream_with_context(generate_dump()), mimetype='text/plain')
     safe_name = netloc.replace('.', '_')
-    response.headers['Content-Disposition'] = f'attachment; filename="WPD_DUMP_{safe_name}.txt"'
+    response.headers['Content-Disposition'] = f'attachment; filename="EXTRACT_{safe_name}.txt"'
     return response
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
